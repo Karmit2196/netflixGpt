@@ -1,19 +1,28 @@
-import React from "react";
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { validateLoginForm } from "../utils/validation";
-const Login = () => {
-  const [newUser, setNewUser] = useState(false);
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "../firebase"; // ✅ Make sure this path is correct
+import {toast} from 'react-toastify'
+
+const Login = ({ isSignup }) => {
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false); // ⏳ Track request state
 
   const name = useRef(null);
   const email = useRef(null);
   const password = useRef(null);
 
+  const navigate = useNavigate();
+
   const handleUser = () => {
-    setNewUser(!newUser);
+    navigate(isSignup ? "/login" : "/signup");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const inputData = {
@@ -22,38 +31,61 @@ const Login = () => {
       password: password.current?.value,
     };
 
-    const validationErrors = validateLoginForm(inputData, newUser);
-
+    const validationErrors = validateLoginForm(inputData, isSignup);
     if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors); // 👈 store the errors in state
+      setErrors(validationErrors);
       return;
     }
 
-    // No errors
-    setErrors({}); // 👈 clear previous errors
-    console.log("Form is valid", inputData);
+    setErrors({});
+    setLoading(true);
 
-    // ... proceed with login or signup logic
+    try {
+      if (isSignup) {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          inputData.email,
+          inputData.password
+        );
+        console.log("✅ User signed up:", userCredential.user);
+        toast.success("Account created successfully!");
+      } else {
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          inputData.email,
+          inputData.password
+        );
+        console.log("✅ User signed in:", userCredential.user);
+        toast.success("Welcome back!");
+      }
+
+      navigate("/browse");
+    } catch (error) {
+      console.error("❌ Firebase Auth Error:", error);
+      alert(error.message);
+    } finally {
+      toast.error(false);
+    }
   };
 
   return (
     <div className="relative h-screen w-full bg-black text-white">
-      {/* Background Image */}{" "}
+      {/* Background Image */}
       <img
         className="absolute inset-0 h-full w-full object-cover opacity-60"
         src="https://assets.nflxext.com/ffe/siteui/vlv3/f83b20c7-a289-4aac-bb47-c08a9fec4de7/web/US-en-20250507-TRIFECTA-perspective_d3be4350-0a72-4b05-929b-bc37b3466a11_large.jpg"
         alt="Background"
       />
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60"></div>
+
       {/* Login Box */}
       <div className="absolute top-1/2 left-1/2 w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-60 px-10 py-12 rounded-md shadow-lg">
         <h2 className="text-3xl font-semibold mb-6">
-          {newUser ? `Sign Up` : `Sign In`}
+          {isSignup ? `Sign Up` : `Sign In`}
         </h2>
 
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-          {newUser && (
+          {isSignup && (
             <>
               <input
                 type="text"
@@ -89,36 +121,30 @@ const Login = () => {
 
           <button
             type="submit"
-            className="bg-red-600 hover:bg-red-700 py-3 rounded text-white font-semibold"
+            disabled={loading}
+            className={`bg-red-600 hover:bg-red-700 py-3 rounded text-white font-semibold ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            {newUser ? `Sign Up` : `Sign In`}
+            {loading
+              ? isSignup
+                ? "Creating Account..."
+                : "Logging In..."
+              : isSignup
+              ? "Sign Up"
+              : "Sign In"}
           </button>
         </form>
 
-        {/* Options */}
-        {!newUser ? (
-          <div className="flex justify-between items-center mt-4 text-sm text-gray-400">
-            <label className="flex items-center space-x-2">
-              <input type="checkbox" className="form-checkbox h-4 w-4" />
-              <span>Remember me</span>
-            </label>
-            <button className="hover:underline">Need help?</button>
-          </div>
-        ) : null}
-
-        {/* Signup Link */}
+        {/* Sign In / Sign Up Switch */}
         <p className="mt-6 text-gray-400 text-sm">
-          {newUser ? `Already have an account?` : `New to Netflix?`}{" "}
+          {isSignup ? `Already have an account?` : `New to Netflix?`}{" "}
           <span
             className="text-white hover:underline cursor-pointer"
             onClick={handleUser}
           >
-            {newUser ? `Sign in` : `Sign up now.`}
+            {isSignup ? `Sign in` : `Sign up now.`}
           </span>
-          <br />
-          {newUser
-            ? `By signing up, you agree to Netflix's Terms of Use and Privacy Policy.`
-            : `This page is protected by Google reCAPTCHA to ensure you're not a bot. Learn more.`}
         </p>
       </div>
     </div>
