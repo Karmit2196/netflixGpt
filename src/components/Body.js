@@ -1,33 +1,34 @@
-import {RouterProvider,  createBrowserRouter, Navigate} from "react-router-dom";
-import ProtectedRoute from "../components/ProtectedRoute"; 
-
-import React from 'react';
-import Login from './Login';
-import Browse from './Browse';
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Login from "./Login";
+import Browse from "./Browse";
+import ProtectedRoute from "./ProtectedRoute";
 
 
-const appRouter = createBrowserRouter([
-  { path: "/", element: <Navigate to="/login" /> },
-  { path: "/login", element: <Login isSignup={false} /> },
-  { path: "/signup", element: <Login isSignup={true} /> },
-  {
-    path: "/browse",
-    element: (
-      <ProtectedRoute>
-        <Browse />
-      </ProtectedRoute>
-    ),
-  },  ]);
-
-  
 const Body = () => {
+  const appRouter = createBrowserRouter([
+    {
+      path: "/login",
+      element: <Login isSignup={false} />,
+    },
+    {
+      path: "/signup",
+      element: <Login isSignup={true} />,
+    },
+    {
+      path: "/browse",
+      element: (
+        <ProtectedRoute>
+          <Browse />
+        </ProtectedRoute>
+      ),
+    },
+  ]);
 
+  return <RouterProvider router={appRouter} />;
+};
 
-  return (
-    <div className="body">
-     
-      <RouterProvider router={appRouter} />
-    </div>
-  );
-}
 export default Body;
+
+
+
+

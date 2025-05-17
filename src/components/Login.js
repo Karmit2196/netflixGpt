@@ -1,16 +1,17 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { validateLoginForm } from "../utils/validation";
+import { getFriendlyError } from "../utils/firebaseErrors";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { auth } from "../firebase"; // ✅ Make sure this path is correct
-import {toast} from 'react-toastify'
+import { auth } from "../firebase";
+import { toast } from "react-toastify";
 
 const Login = ({ isSignup }) => {
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false); // ⏳ Track request state
+  const [loading, setLoading] = useState(false);
 
   const name = useRef(null);
   const email = useRef(null);
@@ -61,16 +62,16 @@ const Login = ({ isSignup }) => {
 
       navigate("/browse");
     } catch (error) {
-      console.error("❌ Firebase Auth Error:", error);
-      alert(error.message);
-    } finally {
-      toast.error(false);
+      console.error("❌ Firebase Auth Error:", error.code);
+      toast.error(getFriendlyError(error.code));
+    }
+    finally {
+      setLoading(false); // ✅ Always reset loading state
     }
   };
 
   return (
     <div className="relative h-screen w-full bg-black text-white">
-      {/* Background Image */}
       <img
         className="absolute inset-0 h-full w-full object-cover opacity-60"
         src="https://assets.nflxext.com/ffe/siteui/vlv3/f83b20c7-a289-4aac-bb47-c08a9fec4de7/web/US-en-20250507-TRIFECTA-perspective_d3be4350-0a72-4b05-929b-bc37b3466a11_large.jpg"
@@ -78,7 +79,6 @@ const Login = ({ isSignup }) => {
       />
       <div className="absolute inset-0 bg-black bg-opacity-60"></div>
 
-      {/* Login Box */}
       <div className="absolute top-1/2 left-1/2 w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-60 px-10 py-12 rounded-md shadow-lg">
         <h2 className="text-3xl font-semibold mb-6">
           {isSignup ? `Sign Up` : `Sign In`}
@@ -136,7 +136,6 @@ const Login = ({ isSignup }) => {
           </button>
         </form>
 
-        {/* Sign In / Sign Up Switch */}
         <p className="mt-6 text-gray-400 text-sm">
           {isSignup ? `Already have an account?` : `New to Netflix?`}{" "}
           <span

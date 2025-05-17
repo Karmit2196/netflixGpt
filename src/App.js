@@ -1,21 +1,27 @@
-// src/App.js
-import React, { useEffect, useState } from 'react';
-import Header from './components/Header';
-import Body from './components/Body';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase'; 
+import React, { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
+// import components
+import Header from "./components/Header";
+import Login from "./components/Login";
+import Browse from "./components/Browse";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
-  const [user, setUser] = useState(null);      // Authenticated user
-  const [loading, setLoading] = useState(true); // Track loading status
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);     // Will be null if logged out
-      setLoading(false);         // Done checking auth status
+      setUser(firebaseUser);
+      setLoading(false);
     });
 
-    return () => unsubscribe();  // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
 
   if (loading) {
@@ -26,11 +32,44 @@ function App() {
     );
   }
 
+  // ✅ Router setup moved here
+  const appRouter = createBrowserRouter([
+    {
+      path: "/login",
+      element: (
+        <>
+          <Header user={user} />
+          <Login isSignup={false} />
+        </>
+      ),
+    },
+    {
+      path: "/signup",
+      element: (
+        <>
+          <Header user={user} />
+          <Login isSignup={true} />
+        </>
+      ),
+    },
+    {
+      path: "/browse",
+      element: (
+        <ProtectedRoute>
+          <>
+            <Header user={user} />
+            <Browse />
+          </>
+        </ProtectedRoute>
+      ),
+    },
+  ]);
+
   return (
-    <div className="App">
-      <Header user={user} />
-      <Body user={user} />
-    </div>
+    <>
+      <RouterProvider router={appRouter} />
+      <ToastContainer position="top-center" autoClose={3000} theme="dark" />
+    </>
   );
 }
 
